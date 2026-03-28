@@ -1,61 +1,47 @@
-# 🖥️ Network Monitoring Dashboard
+# Network Monitoring Dashboard
 
-**Author:** Biken Timalsina
-**Stack:** Python · Flask · psutil · Chart.js
-**Live at:** `http://localhost:5000` after setup
+A Python dashboard I built to keep an eye on my home network in real time — bandwidth, ping, connected devices, and alerts, all in one place.
 
----
-
-## Features
-
-| Feature | Description |
-|---|---|
-| 📊 Real-time Bandwidth | Upload/Download Mbps sampled every 2 seconds |
-| 📡 Ping Latency | Pings Google DNS, Cloudflare, OpenDNS every 5 s |
-| ⊞ Device Scanner | Reads ARP table to list devices on your LAN |
-| ⊟ Interface Monitor | Shows all network interfaces, IPs, MTU, traffic |
-| ⚑ Smart Alerts | Auto-fires on high latency, packet loss, unreachable hosts |
-| 📈 Historical Charts | 60-datapoint rolling chart for bandwidth and latency |
-| 🌙 Dark Dashboard | Professional dark UI with Chart.js line graphs |
+**Stack:** Python · Flask · psutil · Chart.js  
+**Run it:** `http://localhost:5000` after setup
 
 ---
 
-## Quick Start
+## What it does
 
-### 1. Clone / copy the project
+- Tracks upload/download speed in Mbps, sampled every 2 seconds
+- Pings Google DNS, Cloudflare, and OpenDNS every 5 seconds to monitor latency
+- Reads your ARP table to show devices currently on your LAN
+- Lists all network interfaces with IPs, MTU, and traffic stats
+- Fires alerts automatically when latency spikes, packet loss is high, or a host goes unreachable
+- Keeps a 60-point rolling history for bandwidth and latency charts
+- Dark UI built with Chart.js — no Bootstrap, just custom CSS
+
+---
+
+## Getting started
 ```bash
+# Clone the repo
 git clone https://github.com/bikentimalsina/network-monitor
 cd network-monitor
-```
 
-### 2. Create a virtual environment (recommended)
-```bash
+# Create and activate a virtual environment
 python -m venv venv
+source venv/bin/activate        # macOS / Linux
+venv\Scripts\activate           # Windows
 
-# Linux / macOS
-source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
-```
-
-### 3. Install dependencies
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 4. Run the server
-```bash
+# Start the server
 python app.py
 ```
 
-### 5. Open the dashboard
-Navigate to **http://localhost:5000** in your browser.
+Then open **http://localhost:5000** in your browser.
 
 ---
 
-## Project Structure
-
+## Project structure
 ```
 network-monitor/
 │
@@ -64,40 +50,38 @@ network-monitor/
 ├── requirements.txt
 │
 ├── monitor/
-│   ├── __init__.py
-│   ├── network.py          # NetworkMonitor — bandwidth + latency sampling
-│   ├── devices.py          # DeviceScanner — ARP table parsing
-│   └── alerts.py           # AlertManager — threshold evaluation
+│   ├── network.py          # Bandwidth + latency sampling
+│   ├── devices.py          # ARP table parsing
+│   └── alerts.py           # Threshold-based alert logic
 │
 ├── routes/
-│   ├── __init__.py
 │   ├── main.py             # Serves index.html
-│   └── api.py              # REST API endpoints (/api/stats, /api/devices, ...)
+│   └── api.py              # REST API endpoints
 │
 ├── templates/
 │   └── index.html          # Single-page dashboard
 │
 └── static/
     ├── css/style.css
-    └── js/dashboard.js     # Chart.js charts + live polling logic
+    └── js/dashboard.js     # Chart.js + polling logic
 ```
 
 ---
 
-## API Reference
+## API endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
+| Method | Endpoint | What it returns |
+|--------|----------|-----------------|
 | GET | `/api/stats` | Full snapshot: bandwidth, ping, interfaces, system, alerts |
 | GET | `/api/bandwidth` | Current bandwidth (Mbps) |
-| GET | `/api/bandwidth/history` | Rolling bandwidth history for charts |
+| GET | `/api/bandwidth/history` | Rolling bandwidth history |
 | GET | `/api/ping` | Latest ping results per target |
-| GET | `/api/ping/history` | Rolling latency history for charts |
+| GET | `/api/ping/history` | Rolling latency history |
 | GET | `/api/interfaces` | All network interfaces |
 | GET | `/api/devices` | Devices from ARP table |
-| POST | `/api/devices/scan` | Force immediate device scan |
+| POST | `/api/devices/scan` | Force an immediate device scan |
 | GET | `/api/alerts` | Full alert log |
-| GET | `/api/alerts/active` | Currently active (unresolved) alerts |
+| GET | `/api/alerts/active` | Active (unresolved) alerts only |
 | POST | `/api/alerts/{id}/acknowledge` | Acknowledge an alert |
 | POST | `/api/alerts/clear` | Clear all alerts |
 | GET | `/api/system` | CPU, RAM, hostname |
@@ -105,37 +89,42 @@ network-monitor/
 
 ---
 
-## Configuration (`config.py`)
+## Configuration
 
-| Setting | Default | Description |
-|---|---|---|
-| `BANDWIDTH_INTERVAL` | `2` | Bandwidth sample rate (seconds) |
-| `PING_INTERVAL` | `5` | Ping check interval (seconds) |
-| `DEVICE_SCAN_INTERVAL` | `30` | ARP scan interval (seconds) |
-| `HISTORY_LENGTH` | `60` | Number of datapoints per chart |
-| `PING_TARGETS` | Google / Cloudflare / OpenDNS | Hosts to ping |
-| `ALERT_LATENCY_MS` | `150` | Latency warning threshold (ms) |
-| `ALERT_PACKET_LOSS` | `20` | Packet loss warning threshold (%) |
-| `ALERT_BANDWIDTH_MBPS` | `90` | Bandwidth warning threshold (Mbps) |
+All settings live in `config.py`. Key ones to know:
 
----
-
-## Notes
-
-- **Root/Admin not required** — uses the OS ARP cache (`arp -a`) for device discovery.
-- **Cross-platform** — tested on Windows, Linux, and macOS. Ping commands adjust automatically.
-- **No database** — all data is kept in memory (rolling window). Restart clears history.
-- For deeper device scanning (active ARP probing), you can extend `devices.py` with `scapy`.
+| Setting | Default | What it controls |
+|---------|---------|-----------------|
+| `BANDWIDTH_INTERVAL` | `2s` | How often bandwidth is sampled |
+| `PING_INTERVAL` | `5s` | How often ping checks run |
+| `DEVICE_SCAN_INTERVAL` | `30s` | ARP scan frequency |
+| `HISTORY_LENGTH` | `60` | Datapoints kept per chart |
+| `PING_TARGETS` | Google / Cloudflare / OpenDNS | Hosts to monitor |
+| `ALERT_LATENCY_MS` | `150ms` | Latency warning threshold |
+| `ALERT_PACKET_LOSS` | `20%` | Packet loss warning threshold |
+| `ALERT_BANDWIDTH_MBPS` | `90 Mbps` | Bandwidth spike threshold |
 
 ---
 
-## Technologies
+## A few things worth knowing
+
+**No root/admin needed.** Device discovery reads the OS ARP cache (`arp -a`), so no elevated permissions required.
+
+**Cross-platform.** Tested on Windows, Linux, and macOS. Ping commands adjust automatically per OS.
+
+**No database.** Everything is in memory as a rolling window. Restart the server and history clears.
+
+If you want active ARP probing instead of just reading the cache, `devices.py` is the place to extend — `scapy` works well for that.
+
+---
+
+## Built with
 
 - **Flask** — lightweight Python web framework
-- **psutil** — cross-platform system/network stats
-- **Chart.js** — beautiful, animated line charts (loaded from CDN)
-- **Bootstrap-free** — fully custom dark CSS, no heavy dependencies
+- **psutil** — cross-platform system and network stats
+- **Chart.js** — animated line charts, loaded from CDN
+- Custom dark CSS — no heavy UI frameworks
 
 ---
 
-*Built with ♡ by Biken Timalsina — Nepal*
+*Built by Biken Timalsina*
